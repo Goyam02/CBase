@@ -53,3 +53,9 @@ dkms.conf
 
 # debug information files
 *.dwo
+
+cbase
+# Database files
+*.db
+# macOS
+.DS_Store
