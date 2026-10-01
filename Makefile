@@ -7,7 +7,8 @@ TARGET = cbase
 SRC = src/main.c \
       src/cli.c \
       src/database.c \
-      src/table.c
+      src/table.c	\
+	  src/parser.c
 
 $(TARGET): $(SRC)
 	$(CC) $(CFLAGS) $(SRC) -o $(TARGET)

@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "cli.h"
+#include "parser.h"
 
 #define INPUT_BUFFER_SIZE 1024
 
@@ -15,37 +16,55 @@ static void print_help(void){
     printf("--------------\n");
     printf(".help   Show this help message\n");
     printf(".tables List tables\n");
+    printf(".schema <table> Show table schema\n");
     printf(".exit   Exit CBase\n");
     printf("\n");
 }
 
 static void handle_create_table(Database *database, const char *input){
-    char table_name[MAX_NAME_LENGTH];
-    if (sscanf(
-            input,
-            "CREATE TABLE %31s",
-            table_name
-        ) != 1) {
-
-        printf("Invalid CREATE TABLE command.\n");
+    Table table;
+    if(!parse_create_table(input, &table)){
+        printf("Syntax error in CREATE TABLE.\n");
+        return;
+    }
+    if(database_find_table(database, table.name) != NULL){
+        printf("Table '%s' already exists.\n",table.name);
         return;
     }
 
-    Table *table = database_create_table(database, table_name);
-
-    if (table == NULL) {
+    if(!database_add_table(database, &table)){
         printf("Could not create table.\n");
         return;
     }
-
-    printf("Table '%s' created.\n", table->name);
+    printf("Table '%s' created.\n", table.name);
 }
+// static void handle_create_table(Database *database, const char *input){
+//     char table_name[MAX_NAME_LENGTH];
+//     if (sscanf(
+//             input,
+//             "CREATE TABLE %31s",
+//             table_name
+//         ) != 1) {
+
+//         printf("Invalid CREATE TABLE command.\n");
+//         return;
+//     }
+
+//     Table *table = database_create_table(database, table_name);
+
+//     if (table == NULL) {
+//         printf("Could not create table.\n");
+//         return;
+//     }
+
+//     printf("Table '%s' created.\n", table->name);
+// }
 
 void start_cli(Database *database){
 
     char input[INPUT_BUFFER_SIZE];
 
-    printf("CBase v0.2\n");
+    printf("CBase\n");
     printf("A lightweight database engine written in C\n\n");
 
     while(1){
@@ -79,6 +98,27 @@ void start_cli(Database *database){
 
         if (strlen(input) == 0){
             continue;
+        }
+        
+        if(strncmp(input, ".schema", 7) == 0){
+
+            const char *table_name = input +7;
+             while(*table_name == ' '){
+                table_name++;
+            }
+            if(*table_name == '\0'){
+                printf("Usage: .schema <table>\n");
+                continue;
+            }
+
+            Table *table = database_find_table(database, table_name);
+            if(table == NULL){
+                printf("Table '%s' does not exists yet\n", table_name);
+            }else{
+                table_print_schema(table);
+            }
+            continue;
+
         }
 
         printf("Unknown command: %s\n", input);

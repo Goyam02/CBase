@@ -42,3 +42,16 @@ void database_list_tables(const Database *database){
     }
 
 }
+
+int database_add_table(Database *database, const Table *table){
+    if((*database).table_count >= MAX_TABLES) return 0;
+
+    (*database).tables[(*database).table_count] = *table;
+
+    (*database).table_count++;
+
+    return 1;
+
+
+
+}

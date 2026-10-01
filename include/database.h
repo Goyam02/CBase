@@ -25,5 +25,9 @@ void database_list_tables(
     const Database *database
 );
 
+int database_add_table(
+    Database *database,
+    const Table *table
+);
 
 #endif
