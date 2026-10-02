@@ -90,6 +90,49 @@ static void handle_insert(Database *database, const char *input){
     printf("Inserted.\n");
 }
 
+static void handle_select(Database *database, const char *input){
+    const char *from = strstr(input, "FROM");
+
+    if(from == NULL){
+        printf("Invalid SELECT command.\n");
+        return;
+    }
+
+    from += 4;
+
+    while(*from == ' '){
+        from++;
+    }
+
+    char table_name[MAX_NAME_LENGTH];
+
+    if(sscanf(from, "%31s", table_name) != 1){
+        printf("Invalid SELECT command.\n");
+        return;
+    }
+
+    Table *table = database_find_table(database,table_name);
+    if (table == NULL) {
+        printf("Table '%s' does not exist.\n",table_name);
+        return;
+    }
+
+    for(int i = 0; i < (*table).column_count; i++){
+        printf("%s",(*table).columns[i].name);
+        if(i < (*table).column_count - 1){
+            printf(" | ");
+        }
+    }
+
+    printf("\n");
+
+    for(int i = 0; i < (*table).row_count; i++){
+        row_print((*table).rows[i]);
+    }
+}
+
+
+
 
 void start_cli(Database *database){
 
@@ -153,6 +196,11 @@ void start_cli(Database *database){
         }
         if(strncmp(input, "INSERT INTO", 11) == 0){
             handle_insert(database, input);
+            continue;
+        }
+
+        if(strncmp(input, "SELECT", 6) == 0){
+            handle_select(database, input);
             continue;
         }
 
