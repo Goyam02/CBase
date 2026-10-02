@@ -60,6 +60,37 @@ static void handle_create_table(Database *database, const char *input){
 //     printf("Table '%s' created.\n", table->name);
 // }
 
+static void handle_insert(Database *database, const char *input){
+    char table_name[MAX_NAME_LENGTH];
+    if (sscanf(input, "INSERT INTO %31s", table_name) != 1){
+        printf("Invalid INSERT command.\n");
+        return;
+    }
+
+    Table *table = database_find_table(database,table_name);
+
+    if(table == NULL){
+        printf("Table '%s' does not exist.\n",table_name);
+        return;
+    }
+
+    Row *row = NULL;
+
+    if(!parse_insert(input, table, &row)){
+        printf("Syntax error in INSERT.\n");
+        return;
+    }
+
+    if(!table_insert_row(table, row)){
+        row_free(row);
+        printf("Failed to insert row.\n");
+        return;
+    }
+
+    printf("Inserted.\n");
+}
+
+
 void start_cli(Database *database){
 
     char input[INPUT_BUFFER_SIZE];
@@ -120,7 +151,13 @@ void start_cli(Database *database){
             continue;
 
         }
+        if(strncmp(input, "INSERT INTO", 11) == 0){
+            handle_insert(database, input);
+            continue;
+        }
 
         printf("Unknown command: %s\n", input);
     }
 }
+
+

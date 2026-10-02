@@ -30,4 +30,8 @@ int database_add_table(
     const Table *table
 );
 
+
+void database_free(Database *database);
 #endif
+
+

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include<string.h>
 #include<ctype.h>
+#include <stdlib.h>
 
 #include "parser.h"
 
@@ -99,4 +100,140 @@ int parse_create_table(const char *input, Table *table){
 
 
 }
+
+static int read_quoted_string(const char** input, char *buffer, int buffer_size){
+    if(**input != '\''){
+        return 0;
+    }
+
+    (*input)++;
+
+    int length = 0;
+    while(**input != '\0' && **input != '\''){
+        if(length >= buffer_size - 1){
+            return 0;
+        }
+        buffer[length++] = **input;
+        (*input)++;
+    }
+
+    if(**input != '\''){
+        return 0;
+    }
+    (*input)++;
+
+    buffer[length] = '\0';
+    return 1;
+
+}
+
+static int parse_value(const char **input, Datatype expected_type, Value *value){
+
+    skip_spaces(input);
+
+    (*value).type = expected_type;
+
+    if(expected_type == TYPE_INT){
+
+        char buffer[64];
+
+        if(!read_word(input, buffer, sizeof(buffer))){
+            return 0;
+        }
+
+        char *end;
+
+        long parsed = strtol(buffer, &end, 10);
+        if(*end != '\0'){
+            return 0;
+        }
+
+        (*value).int_value = (int)parsed;
+
+        return 1;
+    }
+
+    if(expected_type == TYPE_FLOAT){
+
+        char buffer[64];
+
+        if(!read_word(input, buffer, sizeof(buffer))){
+            return 0;
+        }
+
+        char *end;
+
+        float parsed = strtof(buffer, &end);
+        if(*end != '\0'){
+            return 0;
+        }
+
+        (*value).float_value = parsed;
+
+        return 1;
+    }
+
+    if(expected_type == TYPE_TEXT){
+
+        return read_quoted_string(input, (*value).text_value, MAX_TEXT_LENGTH);
+    }
+    return 0;
+
+
+}
+
+
+int parse_insert(const char* input, Table *table, Row **row){
+    if(!match_keyword(&input, "INSERT")) return 0;
+    if(!match_keyword(&input, "INTO")) return 0;
+
+    char table_name[MAX_NAME_LENGTH];
+
+    if(!read_word(&input, table_name, sizeof(table_name))) return 0;
+    
+    if(strcmp(table_name, (*table).name) != 0) return 0;
+
+    if(!match_keyword(&input, "VALUES")) return 0;
+
+    skip_spaces(&input);
+
+    if(*input != '(') return 0;
+    input++;
+
+    Row *new_row = row_create((*table).column_count);
+
+    if(new_row == NULL) return 0;
+
+    for(int i = 0; i < (*table).column_count; i++){
+
+        if(!parse_value(&input, (*table).columns[i].type, &new_row->values[i])){
+            row_free(new_row);
+            return 0;
+        }
+
+        skip_spaces(&input);
+
+        if(i < (*table).column_count - 1){
+
+            if(*input != ','){
+                row_free(new_row);
+                return 0;
+            }
+
+            input++;
+
+        }else{
+            if(*input != ')'){
+                row_free(new_row);
+                return 0;
+            }
+            input++;
+        }
+    }
+
+    *row = new_row;
+
+    return 1;
+}
+
 

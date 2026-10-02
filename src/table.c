@@ -1,12 +1,20 @@
 #include<stdio.h>
 #include<string.h>
+#include<stdlib.h>
 
 #include "table.h"
 
 void table_init(Table *table, const char *name){
     strncpy((*table).name, name, MAX_NAME_LENGTH - 1);
+
     (*table).name[MAX_NAME_LENGTH - 1] = '\0';
     (*table).column_count = 0;
+
+    (*table).rows = NULL;
+    (*table).row_count = 0;
+    (*table).row_capacity = 0;
+
+
 }
 
 int table_add_column(Table *table, const char* name, Datatype type){
@@ -56,3 +64,45 @@ void table_print_schema(const Table *table){
     printf(");\n");
 }
 
+
+int table_insert_row(Table *table, Row *row){
+    if(row == NULL) return 0;
+
+    if((*row).value_count != (*table).column_count) return 0;
+
+    if((*table).row_count >= (*table).row_capacity){
+        int new_capacity;
+
+        if((*table).row_capacity == 0){
+            new_capacity = 8;
+        }else{
+            new_capacity = (*table).row_capacity * 2;
+
+        }
+
+        Row **new_rows = realloc((*table).rows, sizeof(Row *)*new_capacity);
+
+        if(new_rows == NULL) return 0;
+        (*table).rows = new_rows;
+        (*table).row_capacity = new_capacity;
+
+    }
+    (*table).rows[(*table).row_count] = row;
+    (*table).row_count++;
+
+    return 1;
+}
+
+
+void table_free(Table *table) {
+
+    for(int i = 0; i < (*table).row_count; i++){
+        row_free((*table).rows[i]);
+    }
+
+    free((*table).rows);
+
+    (*table).rows = NULL;
+    (*table).row_count = 0;
+    (*table).row_capacity = 0;
+}

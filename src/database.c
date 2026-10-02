@@ -55,3 +55,12 @@ int database_add_table(Database *database, const Table *table){
 
 
 }
+
+void database_free(Database *database){
+
+    for(int i = 0; i < (*database).table_count; i++){
+        table_free(&(*database).tables[i]);
+    }
+
+    (*database).table_count = 0;
+}

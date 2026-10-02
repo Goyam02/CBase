@@ -8,7 +8,9 @@ SRC = src/main.c \
       src/cli.c \
       src/database.c \
       src/table.c	\
-	  src/parser.c
+	  src/parser.c	\
+	  src/value.c	\
+	  src/row.c
 
 $(TARGET): $(SRC)
 	$(CC) $(CFLAGS) $(SRC) -o $(TARGET)
