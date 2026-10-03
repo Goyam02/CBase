@@ -88,6 +88,14 @@ int storage_save_table(FILE *file, const Table *table){
         }
 
     }
+    if(fwrite(&(*table).row_count, sizeof(int), 1, file) != 1){
+        return 0;
+    }
+    for(int i = 0; i < table->row_count; i++){
+        if(!storage_save_row(file, (*table).rows[i])){
+            return 0;
+        }
+    }
     return 1;
 }
 
@@ -125,6 +133,91 @@ int storage_load_table(FILE *file, Table *table){
             return 0;
         }
     }
+    int row_count;
+    if(fread(&row_count, sizeof(int), 1, file) != 1){
+        return 0;
+    }
+    if(row_count < 0) return 0;
+    if(row_count > MAX_ROWS) return 0;
 
+    for(int i = 0; i < row_count; i++){
+        Row *row = row_create((*table).column_count);
+
+        if(row == NULL) return 0;
+        if(!storage_load_row(file, row)){
+        row_free(row);
+        return 0;
+        }
+
+        if(!table_insert_row(table, row)){
+        row_free(row);
+        return 0;
+        }
+
+    }
     return 1;
 }
+
+int storage_save_value(FILE *file, const Value *value){
+    
+    if(fwrite(&(*value).type, sizeof(Datatype), 1, file) != 1) return 0;
+
+    switch((*value).type){
+        case TYPE_INT:
+            if(fwrite(&(*value).int_value, sizeof(int), 1, file) != 1) return 0;
+            break;
+        case TYPE_FLOAT:
+            if(fwrite(&(*value).float_value, sizeof(float), 1, file) != 1) return 0;
+            break;
+
+        case TYPE_TEXT:
+            if(fwrite((*value).text_value, sizeof((*value).text_value), 1, file) != 1) return 0;
+            break;
+
+        default:
+            return 0;
+    }
+    return 1;
+}
+
+int storage_load_value(FILE *file, Value *value){
+
+    if(fread(&(*value).type, sizeof(Datatype), 1, file) != 1) return 0;
+    switch((*value).type){
+        case TYPE_INT:
+            if(fread(&(*value).int_value, sizeof(int), 1, file) != 1) return 0;
+            break;
+
+        case TYPE_FLOAT:
+            if(fread(&(*value).float_value, sizeof(float), 1, file) != 1) return 0;
+            break;
+        case TYPE_TEXT:
+            if(fread((*value).text_value, sizeof((*value).text_value), 1, file) != 1) return 0;
+
+            (*value).text_value[MAX_TEXT_LENGTH - 1] = '\0';
+            break;
+        default:
+            return 0;
+    }
+    return 1;
+
+}
+
+
+int storage_save_row(FILE *file, const Row *row){
+    for(int i = 0; i < (*row).value_count; i++){
+        if(!storage_save_value(file, &(*row).values[i])) return 0;
+
+    }
+    return 1;
+}
+
+
+int storage_load_row(FILE *file, Row *row){
+    for(int i = 0; i < (*row).value_count; i++){
+        if(!storage_load_value(file, &(*row).values[i])) return 0;
+
+    }
+    return 1;
+}
+
