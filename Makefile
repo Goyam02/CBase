@@ -10,7 +10,8 @@ SRC = src/main.c \
       src/table.c	\
 	  src/parser.c	\
 	  src/value.c	\
-	  src/row.c
+	  src/row.c	\
+	  src/storage.c
 
 $(TARGET): $(SRC)
 	$(CC) $(CFLAGS) $(SRC) -o $(TARGET)
