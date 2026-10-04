@@ -11,7 +11,8 @@ SRC = src/main.c \
 	  src/parser.c	\
 	  src/value.c	\
 	  src/row.c	\
-	  src/storage.c
+	  src/storage.c	\
+	  src/pager.c
 
 $(TARGET): $(SRC)
 	$(CC) $(CFLAGS) $(SRC) -o $(TARGET)
