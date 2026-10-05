@@ -5,7 +5,8 @@
 
 typedef enum{
     QUERY_SELECT,
-    QUERY_UPDATE
+    QUERY_UPDATE,
+    QUERY_DELETE
 }QueryType;
 
 typedef enum {
@@ -48,10 +49,16 @@ typedef struct{
     char condition_value[MAX_NAME_LENGTH];
 }UpdateQuery;
 
+typedef struct {
+    QueryType type;
+    char table_name[MAX_NAME_LENGTH];
+    Condition condition;
+}DeleteQuery;
 
 
 int execute_select(Database *database, const SelectQuery *query);
 int execute_update(Database *database, const UpdateQuery *query);
+int execute_delete(Database *database, const DeleteQuery *query);
 
 
 #endif

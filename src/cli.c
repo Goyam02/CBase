@@ -150,6 +150,16 @@ static void handle_update(Database *database, const char *input){
     execute_update(database, &query);
 }
 
+static void handle_delete(Database *database, const char *input){
+    DeleteQuery query;
+    if(!parse_delete(input, &query)){
+        printf("Invalid DELETE command.\n");
+        return;
+    }
+
+    execute_delete(database, &query);
+}
+
 
 
 void start_cli(Database *database){
@@ -223,6 +233,10 @@ void start_cli(Database *database){
         }
         if(strncmp(input, "UPDATE", 6) == 0){
             handle_update(database, input);
+            continue;
+        }
+        if(strncmp(input, "DELETE", 6) == 0){
+            handle_delete(database, input);
             continue;
         }
 

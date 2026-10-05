@@ -402,3 +402,27 @@ int parse_update(const char *input,UpdateQuery *query){
 }
 
 
+int parse_delete(const char *input, DeleteQuery *query){
+    memset(query, 0, sizeof(DeleteQuery));
+
+    if(!match_keyword(&input, "DELETE")) return 0;
+    if(!match_keyword(&input, "FROM")) return 0;
+
+    if(!read_word(&input, (*query).table_name, sizeof((*query).table_name))){
+        return 0;
+    }
+
+    (*query).type = QUERY_DELETE;
+    (*query).condition.has_condition = 0;
+
+    skip_spaces(&input);
+
+    if(*input != '\0'){
+        if(!parse_condition(&input, &(*query).condition)){
+            return 0;
+        }
+        (*query).condition.has_condition = 1;
+    }
+
+    return 1;
+}

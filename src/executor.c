@@ -259,3 +259,61 @@ int execute_update(Database *database, const UpdateQuery *query){
     printf("Updated %d row(s).\n", updated_count);
     return 1;
 }
+
+int execute_delete(Database *database, const DeleteQuery *query){
+    Table *table = database_find_table(database, (*query).table_name);
+
+    if(table == NULL){
+        printf("Table '%s' does not exist.\n", (*query).table_name);
+        return 0;
+    }
+
+    int condition_column_index = -1;
+    Value condition_value;
+
+    if((*query).condition.has_condition){
+        condition_column_index = find_column_index(table, (*query).condition.column);
+        if(condition_column_index == -1){
+            printf("Column '%s' does not exist.\n", (*query).condition.column);
+            return 0;
+        }
+
+        Datatype condition_type = (*table).columns[condition_column_index].type;
+
+        if(!create_condition_value((*query).condition.value, condition_type, &condition_value)){
+            printf("Invalid WHERE value.\n");
+            return 0;
+        }
+    }
+
+    int deleted_count = 0;
+
+    for(int i = 0; i < (*table).row_count; ){
+        Row *row = (*table).rows[i];
+        int should_delete = 1;
+
+        if((*query).condition.has_condition){
+            Value *actual = &(*row).values[condition_column_index];
+            if(!compare_values(actual, (*query).condition.operator, &condition_value)){
+                should_delete = 0;
+            }
+        }
+
+        if(should_delete){
+            row_free(row);
+
+            for(int j = i; j < (*table).row_count - 1; j++){
+                (*table).rows[j] = (*table).rows[j + 1];
+            }
+
+            (*table).row_count--;
+            deleted_count++;
+        }else{
+            i++;
+        }
+    }
+
+    printf("Deleted %d row(s).\n", deleted_count);
+    return 1;
+}
+
