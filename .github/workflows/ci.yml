@@ -1,0 +1,41 @@
+name: CBase CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential
+
+      - name: Build CBase
+        run: make
+
+      - name: Verify build artifact
+        run: |
+          test -f cbase
+          ./cbase --help || true
+
+      - name: Run end-to-end smoke test
+        run: |
+          ./cbase << 'EOF'
+          CREATE TABLE students (id INT, name TEXT, age INT, cgpa FLOAT);
+          INSERT INTO students VALUES (1, 'Goyam', 20, 9.47);
+          INSERT INTO students VALUES (2, 'Rahul', 21, 8.90);
+          SELECT * FROM students;
+          UPDATE students SET age = 22 WHERE id = 2;
+          DELETE FROM students WHERE id = 1;
+          SELECT * FROM students;
+          .exit
+          EOF
