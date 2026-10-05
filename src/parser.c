@@ -235,8 +235,83 @@ int parse_insert(const char* input, Table *table, Row **row){
 
     return 1;
 }
+static int parse_operator(const char **input, Operator *operator){
+    skip_spaces(input);
+
+    if(strncmp(*input, ">=", 2) == 0){
+        *operator = OP_GREATER_EQUAL;
+        *input += 2;
+        return 1;
+    }
+
+    if(strncmp(*input, "<=", 2) == 0){
+        *operator = OP_LESS_EQUAL;
+        *input += 2;
+        return 1;
+    }
+
+    if(strncmp(*input, "!=", 2) == 0){
+        *operator = OP_NOT_EQUAL;
+        *input += 2;
+        return 1;
+    }
+
+    if(**input == '='){
+        *operator = OP_EQUAL;
+        (*input)++;
+        return 1;
+    }
+
+    if(**input == '>'){
+        *operator = OP_GREATER;
+        (*input)++;
+        return 1;
+    }
+
+    if(**input == '<'){
+        *operator = OP_LESS;
+        (*input)++;
+        return 1;
+    }
+
+    return 0;
+}
+
+
+
+static int parse_condition(const char **input, SelectQuery *query){
+
+    if(!match_keyword(input, "WHERE")){
+        return 0;
+    }
+
+    if(!read_word(input, (*query).condition_column, sizeof((*query).condition_column))){
+        return 0;
+    }
+
+    if(!parse_operator(input, &(*query).condition_operator)){
+        return 0;
+    }
+
+    skip_spaces(input);
+
+    if(**input == '\''){
+        if(!read_quoted_string(input, (*query).condition_value,sizeof((*query).condition_value))){
+            return 0;
+        }
+        return 1;
+    }
+
+    
+    if(!read_word(input,(*query).condition_value,sizeof((*query).condition_value))){
+        return 0;
+    }
+    return 1;
+}
 
 int parse_select(const char *input, SelectQuery *query){
+    memset(query, 0, sizeof(SelectQuery));
+
     if(!match_keyword(&input, "SELECT")) return 0;
 
     char column[MAX_NAME_LENGTH];
@@ -258,9 +333,22 @@ int parse_select(const char *input, SelectQuery *query){
 
     (*query).type = QUERY_SELECT;
     (*query).select_all = 1;
+    (*query).has_condition = 0;
+
+    const char *remaining = input;
+
+    skip_spaces(&remaining);
+    if(*remaining != '\0'){
+        if(!parse_condition(&remaining, query)){
+            return 0;
+        }
+
+        (*query).has_condition = 1;
+    }
+
+
 
     return 1;
 
 }
-
 
