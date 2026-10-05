@@ -3,6 +3,7 @@
 
 #include "cli.h"
 #include "parser.h"
+#include "executor.h"
 
 #define INPUT_BUFFER_SIZE 1024
 
@@ -91,44 +92,51 @@ static void handle_insert(Database *database, const char *input){
 }
 
 static void handle_select(Database *database, const char *input){
-    const char *from = strstr(input, "FROM");
-
-    if(from == NULL){
+    // const char *from = strstr(input, "FROM");
+    SelectQuery query;
+    if(!parse_select(input, &query)){
         printf("Invalid SELECT command.\n");
         return;
     }
 
-    from += 4;
+    execute_select(database,&query);
 
-    while(*from == ' '){
-        from++;
-    }
+    // if(from == NULL){
+    //     printf("Invalid SELECT command.\n");
+    //     return;
+    // }
 
-    char table_name[MAX_NAME_LENGTH];
+    // from += 4;
 
-    if(sscanf(from, "%31s", table_name) != 1){
-        printf("Invalid SELECT command.\n");
-        return;
-    }
+    // while(*from == ' '){
+    //     from++;
+    // }
 
-    Table *table = database_find_table(database,table_name);
-    if (table == NULL) {
-        printf("Table '%s' does not exist.\n",table_name);
-        return;
-    }
+    // char table_name[MAX_NAME_LENGTH];
 
-    for(int i = 0; i < (*table).column_count; i++){
-        printf("%s",(*table).columns[i].name);
-        if(i < (*table).column_count - 1){
-            printf(" | ");
-        }
-    }
+    // if(sscanf(from, "%31s", table_name) != 1){
+    //     printf("Invalid SELECT command.\n");
+    //     return;
+    // }
 
-    printf("\n");
+    // Table *table = database_find_table(database,table_name);
+    // if (table == NULL) {
+    //     printf("Table '%s' does not exist.\n",table_name);
+    //     return;
+    // }
 
-    for(int i = 0; i < (*table).row_count; i++){
-        row_print((*table).rows[i]);
-    }
+    // for(int i = 0; i < (*table).column_count; i++){
+    //     printf("%s",(*table).columns[i].name);
+    //     if(i < (*table).column_count - 1){
+    //         printf(" | ");
+    //     }
+    // }
+
+    // printf("\n");
+
+    // for(int i = 0; i < (*table).row_count; i++){
+    //     row_print((*table).rows[i]);
+    // }
 }
 
 

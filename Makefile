@@ -12,7 +12,8 @@ SRC = src/main.c \
 	  src/value.c	\
 	  src/row.c	\
 	  src/storage.c	\
-	  src/pager.c
+	  src/pager.c	\
+	  src/executor.c
 
 $(TARGET): $(SRC)
 	$(CC) $(CFLAGS) $(SRC) -o $(TARGET)

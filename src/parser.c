@@ -236,4 +236,31 @@ int parse_insert(const char* input, Table *table, Row **row){
     return 1;
 }
 
+int parse_select(const char *input, SelectQuery *query){
+    if(!match_keyword(&input, "SELECT")) return 0;
+
+    char column[MAX_NAME_LENGTH];
+
+    if(!read_word(&input,column,sizeof(column))){
+        return 0;
+    }
+    if(strcmp(column, "*") != 0){
+        return 0;
+    }
+
+    if(!match_keyword(&input, "FROM")){
+        return 0;
+    }
+
+    if(!read_word(&input,(*query).table_name,sizeof(query->table_name))){
+        return 0;
+    }
+
+    (*query).type = QUERY_SELECT;
+    (*query).select_all = 1;
+
+    return 1;
+
+}
+
 
