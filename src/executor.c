@@ -163,15 +163,15 @@ int execute_select(Database *database, const SelectQuery *query){
     int condition_column_index = -1;
     Value condition_value;
 
-    if((*query).has_condition){
-        condition_column_index =find_column_index(table, (*query).condition_column);
+    if((*query).condition.has_condition){
+        condition_column_index =find_column_index(table, (*query).condition.column);
         if (condition_column_index == -1){
-            printf("Column '%s' does not exist.\n",(*query).condition_column);
+            printf("Column '%s' does not exist.\n",(*query).condition.column);
             return 0;
         }
         Datatype type =(*table).columns[condition_column_index].type;
 
-        if(!create_condition_value((*query).condition_value, type, &condition_value)){
+        if(!create_condition_value((*query).condition.value, type, &condition_value)){
             printf("Invalid WHERE value.\n");
             return 0;
         }
@@ -188,14 +188,74 @@ int execute_select(Database *database, const SelectQuery *query){
     for(int i = 0;i < (*table).row_count;i++){
         Row *row = (*table).rows[i];
 
-        if((*query).has_condition){
+        if((*query).condition.has_condition){
 
             Value *actual = &(*row).values[condition_column_index];
-            if(!compare_values(actual, (query)->condition_operator, &condition_value)){
+            if(!compare_values(actual, (*query).condition.operator, &condition_value)){
                 continue;
             }
         }
         row_print((*table).rows[i]);
     }
+    return 1;
+}
+
+int execute_update(Database *database, const UpdateQuery *query){
+    Table *table = database_find_table(database, (*query).table_name);
+
+    if(table == NULL){
+        printf("Table '%s' does not exist.\n", (*query).table_name);
+        return 0;
+    }
+
+    int update_column_index = find_column_index(table, (*query).update_column);
+    if(update_column_index == -1){
+        printf("Column '%s' does not exist.\n", (*query).update_column);
+        return 0;
+    }
+
+    Datatype update_type = (*table).columns[update_column_index].type;
+    Value new_value;
+
+    if(!create_condition_value((*query).update_value, update_type, &new_value)){
+        printf("Invalid UPDATE value.\n");
+        return 0;
+    }
+
+    int condition_column_index = -1;
+    Value condition_value;
+
+    if((*query).condition.has_condition){
+        condition_column_index = find_column_index(table, (*query).condition.column);
+        if(condition_column_index == -1){
+            printf("Column '%s' does not exist.\n", (*query).condition.column);
+            return 0;
+        }
+
+        Datatype condition_type = (*table).columns[condition_column_index].type;
+
+        if(!create_condition_value((*query).condition.value, condition_type, &condition_value)){
+            printf("Invalid WHERE value.\n");
+            return 0;
+        }
+    }
+
+    int updated_count = 0;
+
+    for(int i = 0; i < (*table).row_count; i++){
+        Row *row = (*table).rows[i];
+
+        if((*query).condition.has_condition){
+            Value *actual = &(*row).values[condition_column_index];
+            if(!compare_values(actual, (*query).condition.operator, &condition_value)){
+                continue;
+            }
+        }
+
+        (*row).values[update_column_index] = new_value;
+        updated_count++;
+    }
+
+    printf("Updated %d row(s).\n", updated_count);
     return 1;
 }

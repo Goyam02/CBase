@@ -279,33 +279,35 @@ static int parse_operator(const char **input, Operator *operator){
 
 
 
-static int parse_condition(const char **input, SelectQuery *query){
+static int parse_condition(const char **input, Condition *condition){
 
     if(!match_keyword(input, "WHERE")){
         return 0;
     }
 
-    if(!read_word(input, (*query).condition_column, sizeof((*query).condition_column))){
+    if(!read_word(input, (*condition).column, sizeof((*condition).column))){
         return 0;
     }
 
-    if(!parse_operator(input, &(*query).condition_operator)){
+    if(!parse_operator(input, &(*condition).operator)){
         return 0;
     }
 
     skip_spaces(input);
 
     if(**input == '\''){
-        if(!read_quoted_string(input, (*query).condition_value,sizeof((*query).condition_value))){
+        if(!read_quoted_string(input, (*condition).value,sizeof((*condition).value))){
             return 0;
         }
         return 1;
     }
 
     
-    if(!read_word(input,(*query).condition_value,sizeof((*query).condition_value))){
+    if(!read_word(input,(*condition).value,sizeof((*condition).value))){
         return 0;
     }
+
+    (*condition).has_condition = 1;
     return 1;
 }
 
@@ -327,23 +329,23 @@ int parse_select(const char *input, SelectQuery *query){
         return 0;
     }
 
-    if(!read_word(&input,(*query).table_name,sizeof(query->table_name))){
+    if(!read_word(&input,(*query).table_name,sizeof((*query).table_name))){
         return 0;
     }
 
     (*query).type = QUERY_SELECT;
     (*query).select_all = 1;
-    (*query).has_condition = 0;
+    (*query).condition.has_condition = 0;
 
     const char *remaining = input;
 
     skip_spaces(&remaining);
     if(*remaining != '\0'){
-        if(!parse_condition(&remaining, query)){
+        if(!parse_condition(&remaining, &(*query).condition)){
             return 0;
         }
 
-        (*query).has_condition = 1;
+        (*query).condition.has_condition = 1;
     }
 
 
@@ -351,4 +353,52 @@ int parse_select(const char *input, SelectQuery *query){
     return 1;
 
 }
+
+int parse_update(const char *input,UpdateQuery *query){
+    memset(query, 0, sizeof(UpdateQuery));
+
+    if(!match_keyword(&input, "UPDATE")) return 0;
+    if(!read_word(&input,(*query).table_name,sizeof((*query).table_name))){
+        return 0;
+    }
+    if(!match_keyword(&input, "SET")) return 0;
+   
+
+    if(!read_word(&input,(*query).update_column,sizeof((*query).update_column))){
+        return 0;
+    }
+
+    skip_spaces(&input);
+    if(*input != '=') return 0;
+
+    input++;
+    skip_spaces(&input);
+
+    if(*input == '\''){
+        if(!read_quoted_string(&input, (*query).update_value,sizeof((*query).update_value))){
+            return 0;
+        }
+
+    }else{
+        if(!read_word(&input, (*query).update_value, sizeof((*query).update_value))){
+            return 0;
+        }
+    }
+
+    (*query).type = QUERY_UPDATE;
+    (*query).condition.has_condition = 0;
+
+    skip_spaces(&input);
+
+    if((*input) != '\0'){
+        if(!parse_condition(&input, &(*query).condition)){
+            return 0;
+        }
+        (*query).condition.has_condition = 1;
+    }
+
+    return 1;
+
+}
+
 

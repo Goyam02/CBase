@@ -139,6 +139,16 @@ static void handle_select(Database *database, const char *input){
     // }
 }
 
+static void handle_update(Database *database, const char *input){
+    UpdateQuery query;
+
+    if(!parse_update(input, &query)){
+        printf("Invalid UPDATE command.\n");
+        return;
+    }
+
+    execute_update(database, &query);
+}
 
 
 
@@ -209,6 +219,10 @@ void start_cli(Database *database){
 
         if(strncmp(input, "SELECT", 6) == 0){
             handle_select(database, input);
+            continue;
+        }
+        if(strncmp(input, "UPDATE", 6) == 0){
+            handle_update(database, input);
             continue;
         }
 
